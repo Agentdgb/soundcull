@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.soundcull.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "SoundSystemMixin",
+    "ChatScreenMixin",
+    "ClientPlayNetworkHandlerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

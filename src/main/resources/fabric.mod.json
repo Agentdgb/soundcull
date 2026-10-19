@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "soundcull",
+  "version": "${version}",
+  "name": "SoundCull",
+  "description": "Throttles duplicate ambient and mob sounds to prevent OpenAL channel starvation in dense areas.",
+  "authors": [
+    "Khaos"
+  ],
+  "license": "MIT",
+  "icon": "assets/soundcull/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.soundcull.SoundCullClient"
+    ],
+    "client": [
+      "com.soundcull.SoundCullClient"
+    ]
+  },
+  "mixins": [
+    "soundcull.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": ">=1.21"
+  }
+}
