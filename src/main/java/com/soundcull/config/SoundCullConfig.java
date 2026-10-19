@@ -1,6 +1,7 @@
 package com.soundcull.config;
 
 import com.soundcull.SoundCullClient;
+import com.soundcull.culling.SoundThrottler;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.InputStream;
@@ -70,6 +71,7 @@ public final class SoundCullConfig {
                     }
                 }
             }
+            SoundThrottler.invalidateClassificationCache();
             SoundCullClient.trace("Config loaded successfully: enabled=" + enabled);
         } catch (Throwable t) {
             SoundCullClient.trace("ERROR loading config: " + t);
@@ -95,6 +97,7 @@ public final class SoundCullConfig {
             try (OutputStream out = Files.newOutputStream(configPath)) {
                 props.store(out, "SoundCull Configuration (Fabric 1.21.11)");
             }
+            SoundThrottler.invalidateClassificationCache();
             SoundCullClient.trace("Config saved successfully to disk.");
         } catch (Throwable t) {
             SoundCullClient.trace("ERROR saving config: " + t);

@@ -3,12 +3,12 @@ package com.soundcull;
 import com.soundcull.config.SoundCullConfig;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.loader.api.FabricLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 
@@ -16,6 +16,7 @@ public final class SoundCullClient implements ModInitializer, ClientModInitializ
     public static final String MOD_ID = "soundcull";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
     private static volatile boolean initialized = false;
+    private static Path logFile = null;
 
     static {
         trace("SoundCullClient class static initializer loaded");
@@ -45,17 +46,26 @@ public final class SoundCullClient implements ModInitializer, ClientModInitializ
             trace("SoundCullConfig loaded. Enabled: " + SoundCullConfig.enabled + ", Spatial: " + SoundCullConfig.spatialCulling);
         } catch (Throwable t) {
             trace("CRITICAL: Failed to load SoundCullConfig: " + t.getMessage());
-            t.printStackTrace();
+            LOGGER.error("[SoundCull] Failed to load config", t);
         }
         LOGGER.info("[SoundCull] Initialized successfully.");
     }
 
     public static void trace(String msg) {
         String formatted = "[" + Instant.now() + "] " + msg;
-        System.out.println("[SoundCull] " + msg);
+        LOGGER.debug("[SoundCull] {}", msg);
         try {
-            Path tracePath = Paths.get("C:/Users/Admin/AppData/Local/Programs/PrismLauncher/instances/1.21.11/minecraft/soundcull_trace.log");
-            Files.writeString(tracePath, formatted + System.lineSeparator(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            if (logFile == null) {
+                Path baseDir = FabricLoader.getInstance() != null && FabricLoader.getInstance().getGameDir() != null
+                        ? FabricLoader.getInstance().getGameDir()
+                        : Path.of(".");
+                Path logsDir = baseDir.resolve("logs");
+                if (!Files.exists(logsDir)) {
+                    Files.createDirectories(logsDir);
+                }
+                logFile = logsDir.resolve("soundcull_trace.log");
+            }
+            Files.writeString(logFile, formatted + System.lineSeparator(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
         } catch (Throwable ignored) {}
     }
 }
