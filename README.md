@@ -1,25 +1,28 @@
 # SoundCull (Minecraft 1.21 - 1.21.11)
 
-A lightweight Fabric mod that prevents audio engine stutter by rate-limiting redundant ambient and mob sounds.
+A high-performance, client-side Fabric mod that eliminates audio stutter and OpenAL channel starvation by rate-limiting redundant ambient and mob sounds with zero-allocation concurrency.
 
 ## Why?
-Minecraft has a hard limit of ~32 static OpenAL audio channels. In crowded areas (mob farms, villager trading halls), hundreds of identical sounds compete for these channels every second. This causes channel eviction loops and wasted CPU time on attenuation math.
+Minecraft has a hard limit of ~32 static OpenAL audio channels. In dense areas (villager trading halls, automatic mob farms, portal arrays), hundreds of identical sounds compete for audio channels every single second. This causes channel eviction loops, dropped game cues, and wasted CPU cycles on attenuation calculations.
 
-SoundCull intercepts sound playback calls at the client entry point and drops excessive identical sounds before they reach OpenAL.
+SoundCull intercepts sound playback calls at the client entry point and drops excessive identical sounds before they ever reach OpenAL.
 
 ## Key Features
 - **3D Spatial Pre-Culling:** Calculates distance falloff before calling OpenAL. Drops inaudible sounds outside hearing radius.
-- **Rate-Limiting:** Caps repetitive mob/ambient sounds (cows, sheep, villagers, portals) to a configurable window (default: 3 per second).
-- **Immunity List:** Critical gameplay cues (Creeper hissing, TNT fuse, Warden roars, player damage, raid horns) are never culled.
+- **Lock-Free Concurrency:** Replaced synchronization blocks with atomic memory counters (`AtomicInteger`, `AtomicLong`), eliminating thread pauses in high-entity areas.
+- **$O(1)$ Classification Cache:** Evaluates sound identifier prefixes once and caches decisions with zero GC allocations.
+- **In-Game GUI Configuration:** Dedicated in-game visual settings screen with sliders and toggles (`/soundcull gui`).
+- **Critical Survival Immunity:** Creeper hissing, TNT fuses, Warden roars, player damage, and raid horns are strictly protected from culling.
 - **Continuous Sound Protection:** `TickableSoundInstance` sounds (Elytra, Minecarts, Beacons) are fully protected from mid-playback cutoff.
-- **In-Game Command (`/soundcull`):** Real-time telemetry in chat showing exactly how many sounds were filtered and channels saved.
-- **Zero-Allocation Pruning:** Automated memory management keeps RAM overhead below 30 KB.
-- **Client-only:** Completely safe to use on any multiplayer server.
+- **Real-Time Telemetry:** Live chat feedback showing total sounds processed, filtered count, and estimated OpenAL channel savings (`/soundcull stats`).
+- **Zero-Dependency Architecture:** Self-contained client mixins; does not force the heavy Fabric API as a required dependency.
 
 ## Commands (Client-Side)
-- `/soundcull` or `/soundcull stats` - Displays live telemetry and OpenAL channel savings.
+- `/soundcull gui` (or `/soundcull config`) - Opens the visual configuration menu in-game.
+- `/soundcull stats` - Displays live telemetry and OpenAL channel savings.
 - `/soundcull toggle` - Enables or disables the mod on the fly.
-- `/soundcull reset` - Resets telemetry counters.
+- `/soundcull reset` - Resets telemetry counters and flushes the sound cache.
+- `/soundcull` - Displays current configuration status.
 
 ## Configuration
 File: `config/soundcull.properties`

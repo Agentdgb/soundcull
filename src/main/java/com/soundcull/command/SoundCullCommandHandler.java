@@ -3,6 +3,7 @@ package com.soundcull.command;
 import com.soundcull.SoundCullClient;
 import com.soundcull.config.SoundCullConfig;
 import com.soundcull.culling.SoundThrottler;
+import com.soundcull.gui.SoundCullConfigScreen;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -43,12 +44,19 @@ public final class SoundCullCommandHandler {
                     .append(Text.literal(" | Ventana: ").formatted(Formatting.GRAY))
                     .append(Text.literal(SoundCullConfig.maxSoundsPerWindow + " sonidos / " + SoundCullConfig.windowMillis + "ms")
                             .formatted(Formatting.AQUA))
+                    .append(Text.literal(" | GUI: ").formatted(Formatting.GRAY))
+                    .append(Text.literal("/soundcull gui").formatted(Formatting.GOLD))
             );
             return true;
         }
 
         String sub = parts[1];
         switch (sub) {
+            case "gui", "config", "menu" -> {
+                client.execute(() -> {
+                    client.setScreen(new SoundCullConfigScreen(client.currentScreen));
+                });
+            }
             case "toggle" -> {
                 SoundCullConfig.enabled = !SoundCullConfig.enabled;
                 SoundCullConfig.save();
@@ -83,7 +91,7 @@ public final class SoundCullCommandHandler {
             }
             default -> sendFeedback(client, Text.empty()
                     .append(Text.literal("[SoundCull] ").formatted(Formatting.RED, Formatting.BOLD))
-                    .append(Text.literal("Uso: /soundcull | /soundcull toggle | /soundcull stats | /soundcull reset")
+                    .append(Text.literal("Uso: /soundcull | /soundcull gui | /soundcull toggle | /soundcull stats | /soundcull reset")
                             .formatted(Formatting.GRAY))
             );
         }
