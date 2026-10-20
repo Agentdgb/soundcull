@@ -20,8 +20,8 @@ public class SoundCullConfigScreen extends Screen {
     @Override
     protected void init() {
         int centerX = this.width / 2;
-        int startY = 45;
-        int buttonWidth = 200;
+        int startY = 40;
+        int buttonWidth = 220;
         int buttonHeight = 20;
         int spacing = 24;
 
@@ -45,45 +45,54 @@ public class SoundCullConfigScreen extends Screen {
                 }
         ).dimensions(centerX - buttonWidth / 2, startY + spacing, buttonWidth, buttonHeight).build());
 
-        // 3. Cycle Max Sounds per Window (1 -> 2 -> 3 -> 5 -> 10)
-        this.addDrawableChild(ButtonWidget.builder(
-                getMaxSoundsText(),
-                button -> {
-                    int current = SoundCullConfig.maxSoundsPerWindow;
-                    if (current <= 1) SoundCullConfig.maxSoundsPerWindow = 2;
-                    else if (current == 2) SoundCullConfig.maxSoundsPerWindow = 3;
-                    else if (current == 3) SoundCullConfig.maxSoundsPerWindow = 5;
-                    else if (current == 5) SoundCullConfig.maxSoundsPerWindow = 10;
-                    else SoundCullConfig.maxSoundsPerWindow = 1;
+        // 3. Draggable Slider: Max Sounds per Window (1 to 15)
+        this.addDrawableChild(new SoundCullSliderWidget(
+                centerX - buttonWidth / 2,
+                startY + spacing * 2,
+                buttonWidth,
+                buttonHeight,
+                1.0,
+                15.0,
+                SoundCullConfig.maxSoundsPerWindow,
+                true,
+                val -> Text.empty()
+                        .append(Text.literal("Límite de Sonidos: ").formatted(Formatting.GRAY))
+                        .append(Text.literal(String.format("%.0f", val) + " / ventana").formatted(Formatting.AQUA)),
+                val -> {
+                    SoundCullConfig.maxSoundsPerWindow = (int) Math.round(val);
                     SoundCullConfig.save();
-                    button.setMessage(getMaxSoundsText());
                 }
-        ).dimensions(centerX - buttonWidth / 2, startY + spacing * 2, buttonWidth, buttonHeight).build());
+        ));
 
-        // 4. Cycle Window Time (500ms -> 1000ms -> 1500ms -> 2000ms)
-        this.addDrawableChild(ButtonWidget.builder(
-                getWindowMillisText(),
-                button -> {
-                    long current = SoundCullConfig.windowMillis;
-                    if (current <= 500L) SoundCullConfig.windowMillis = 1000L;
-                    else if (current == 1000L) SoundCullConfig.windowMillis = 1500L;
-                    else if (current == 1500L) SoundCullConfig.windowMillis = 2000L;
-                    else SoundCullConfig.windowMillis = 500L;
+        // 4. Draggable Slider: Window Millis (200ms to 3000ms)
+        this.addDrawableChild(new SoundCullSliderWidget(
+                centerX - buttonWidth / 2,
+                startY + spacing * 3,
+                buttonWidth,
+                buttonHeight,
+                200.0,
+                3000.0,
+                SoundCullConfig.windowMillis,
+                true,
+                val -> Text.empty()
+                        .append(Text.literal("Duración Ventana: ").formatted(Formatting.GRAY))
+                        .append(Text.literal(String.format("%.0f", val) + " ms").formatted(Formatting.AQUA)),
+                val -> {
+                    SoundCullConfig.windowMillis = (long) Math.round(val);
                     SoundCullConfig.save();
-                    button.setMessage(getWindowMillisText());
                 }
-        ).dimensions(centerX - buttonWidth / 2, startY + spacing * 3, buttonWidth, buttonHeight).build());
+        ));
 
-        // 5. Reset Stats & Cache
+        // 5. Reset Stats & Cache Button
         this.addDrawableChild(ButtonWidget.builder(
                 Text.literal("Reiniciar Telemetría / Caché").formatted(Formatting.YELLOW),
                 button -> {
                     SoundThrottler.reset();
-                    button.setMessage(Text.literal("¡Reiniciado!").formatted(Formatting.GREEN));
+                    button.setMessage(Text.literal("¡Reiniciado con éxito!").formatted(Formatting.GREEN));
                 }
-        ).dimensions(centerX - buttonWidth / 2, startY + spacing * 4, buttonWidth, buttonHeight).build());
+        ).dimensions(centerX - buttonWidth / 2, startY + spacing * 4 + 4, buttonWidth, buttonHeight).build());
 
-        // 6. Back / Done button
+        // 6. Save & Return Button
         this.addDrawableChild(ButtonWidget.builder(
                 Text.literal("Guardar y Volver").formatted(Formatting.WHITE),
                 button -> this.close()
@@ -104,20 +113,6 @@ public class SoundCullConfigScreen extends Screen {
                         .formatted(SoundCullConfig.spatialCulling ? Formatting.GREEN : Formatting.RED));
     }
 
-    private Text getMaxSoundsText() {
-        return Text.empty()
-                .append(Text.literal("Límite de Sonidos: ").formatted(Formatting.GRAY))
-                .append(Text.literal(SoundCullConfig.maxSoundsPerWindow + " por ventana")
-                        .formatted(Formatting.AQUA));
-    }
-
-    private Text getWindowMillisText() {
-        return Text.empty()
-                .append(Text.literal("Duración Ventana: ").formatted(Formatting.GRAY))
-                .append(Text.literal(SoundCullConfig.windowMillis + " ms")
-                        .formatted(Formatting.AQUA));
-    }
-
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
@@ -125,23 +120,32 @@ public class SoundCullConfigScreen extends Screen {
         // Header Title
         context.drawCenteredTextWithShadow(
                 this.textRenderer,
-                Text.literal("SoundCull - Ajustes de Optimización de Audio").formatted(Formatting.GREEN, Formatting.BOLD),
+                Text.literal("SoundCull — Ajustes de Audio").formatted(Formatting.GREEN, Formatting.BOLD),
                 this.width / 2,
-                18,
+                16,
                 0xFFFFFF
         );
 
-        // Footer Telemetry hint
+        // Subtitle / Hint
+        context.drawCenteredTextWithShadow(
+                this.textRenderer,
+                Text.literal("Inmunidad de Proximidad: Activa (< 5 bloques nunca se silencian)").formatted(Formatting.DARK_GREEN),
+                this.width / 2,
+                28,
+                0x55FF55
+        );
+
+        // Telemetry Footer
         long processed = SoundThrottler.TOTAL_PROCESSED.get();
         long culled = SoundThrottler.TOTAL_CULLED.get();
         double percent = processed > 0 ? (culled * 100.0 / processed) : 0.0;
-        String statsText = String.format("Ahorro actual: %.1f%% de canales | Filtrados: %d", percent, culled);
+        String statsText = String.format("Ahorro actual: %.1f%% de canales OpenAL | Descartados: %d", percent, culled);
         context.drawCenteredTextWithShadow(
                 this.textRenderer,
-                Text.literal(statsText).formatted(Formatting.DARK_GRAY),
+                Text.literal(statsText).formatted(Formatting.GRAY),
                 this.width / 2,
-                this.height - 25,
-                0x888888
+                this.height - 22,
+                0xAAAAAA
         );
     }
 

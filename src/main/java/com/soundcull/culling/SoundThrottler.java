@@ -22,6 +22,10 @@ public final class SoundThrottler {
     public static final AtomicLong TOTAL_PROCESSED = new AtomicLong(0L);
     public static final AtomicLong TOTAL_CULLED = new AtomicLong(0L);
 
+    // Proximity immunity threshold (blocks squared: 5.0 * 5.0 = 25.0)
+    // Any mob or sound within 5 blocks of the player is never culled.
+    public static final double PROXIMITY_IMMUNITY_SQ = 25.0;
+
     private static final Set<String> CRITICAL_PREFIXES = Set.of(
             "entity.creeper.primed",
             "entity.tnt.primed",
@@ -83,8 +87,8 @@ public final class SoundThrottler {
             return false;
         }
 
-        // 3. True 3D Spatial Attenuation Culling
-        if (SoundCullConfig.spatialCulling && sound.getAttenuationType() != SoundInstance.AttenuationType.NONE) {
+        // 3. Distance check: Proximity Immunity and 3D Spatial Attenuation Culling
+        if (sound.getAttenuationType() != SoundInstance.AttenuationType.NONE) {
             MinecraftClient client = MinecraftClient.getInstance();
             ClientPlayerEntity player = client.player;
 
@@ -94,14 +98,20 @@ public final class SoundThrottler {
                 double dz = sound.getZ() - player.getZ();
                 double distSq = dx * dx + dy * dy + dz * dz;
 
-                // Max hearing radius (default falloff in Minecraft is 16 blocks * sound volume)
-                float nominalVolume = Math.max(1.0f, sound.getVolume());
-                double maxRange = nominalVolume * 16.0;
+                // A. Proximity Immunity: Sounds within 5 blocks are NEVER silenced (caves, close combat, direct proximity)
+                if (distSq <= PROXIMITY_IMMUNITY_SQ) {
+                    return false;
+                }
 
-                // If sound source is outside audible sphere, drop before OpenAL processing
-                if (distSq > (maxRange * maxRange)) {
-                    TOTAL_CULLED.incrementAndGet();
-                    return true;
+                // B. Spatial pre-culling outside hearing radius (default 16 blocks * nominal volume)
+                if (SoundCullConfig.spatialCulling) {
+                    float nominalVolume = Math.max(1.0f, sound.getVolume());
+                    double maxRange = nominalVolume * 16.0;
+
+                    if (distSq > (maxRange * maxRange)) {
+                        TOTAL_CULLED.incrementAndGet();
+                        return true;
+                    }
                 }
             }
         }
