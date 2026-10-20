@@ -37,7 +37,7 @@ public final class SoundCullConfig {
                 return FabricLoader.getInstance().getConfigDir().resolve("soundcull.properties");
             }
         } catch (Throwable t) {
-            SoundCullClient.trace("FabricLoader.getInstance().getConfigDir() unavailable: " + t);
+            SoundCullClient.LOGGER.warn("[SoundCull] Could not resolve Fabric config dir, defaulting to config/", t);
         }
         return Paths.get("config/soundcull.properties");
     }
@@ -45,9 +45,7 @@ public final class SoundCullConfig {
     public static void load() {
         try {
             Path configPath = getConfigPath();
-            SoundCullClient.trace("Loading config from: " + configPath.toAbsolutePath());
             if (!Files.exists(configPath)) {
-                SoundCullClient.trace("Config file does not exist, creating default config...");
                 save();
                 return;
             }
@@ -72,10 +70,9 @@ public final class SoundCullConfig {
                 }
             }
             SoundThrottler.invalidateClassificationCache();
-            SoundCullClient.trace("Config loaded successfully: enabled=" + enabled);
+            SoundCullClient.LOGGER.debug("[SoundCull] Configuration loaded successfully.");
         } catch (Throwable t) {
-            SoundCullClient.trace("ERROR loading config: " + t);
-            t.printStackTrace();
+            SoundCullClient.LOGGER.error("[SoundCull] Error loading configuration", t);
         }
     }
 
@@ -90,18 +87,16 @@ public final class SoundCullConfig {
 
         try {
             Path configPath = getConfigPath();
-            SoundCullClient.trace("Saving config to: " + configPath.toAbsolutePath());
             if (configPath.getParent() != null) {
                 Files.createDirectories(configPath.getParent());
             }
             try (OutputStream out = Files.newOutputStream(configPath)) {
-                props.store(out, "SoundCull Configuration (Fabric 1.21.11)");
+                props.store(out, "SoundCull Configuration");
             }
             SoundThrottler.invalidateClassificationCache();
-            SoundCullClient.trace("Config saved successfully to disk.");
+            SoundCullClient.LOGGER.debug("[SoundCull] Configuration saved successfully.");
         } catch (Throwable t) {
-            SoundCullClient.trace("ERROR saving config: " + t);
-            t.printStackTrace();
+            SoundCullClient.LOGGER.error("[SoundCull] Error saving configuration", t);
         }
     }
 }

@@ -9,9 +9,10 @@ SoundCull intercepts sound playback calls at the client entry point and drops ex
 
 ## Key Features
 - **3D Spatial Pre-Culling:** Calculates distance falloff before calling OpenAL. Drops inaudible sounds outside hearing radius.
+- **Proximity Safety (< 5 blocks):** Sounds originating within 5 blocks of the player are strictly immune to culling, ensuring nearby mobs in caves or combat are never silenced.
 - **Lock-Free Concurrency:** Replaced synchronization blocks with atomic memory counters (`AtomicInteger`, `AtomicLong`), eliminating thread pauses in high-entity areas.
 - **$O(1)$ Classification Cache:** Evaluates sound identifier prefixes once and caches decisions with zero GC allocations.
-- **In-Game GUI Configuration:** Dedicated in-game visual settings screen with sliders and toggles (`/soundcull gui`).
+- **In-Game GUI Configuration:** Dedicated in-game visual settings screen with native sliders and toggles (`/soundcull gui`).
 - **Critical Survival Immunity:** Creeper hissing, TNT fuses, Warden roars, player damage, and raid horns are strictly protected from culling.
 - **Continuous Sound Protection:** `TickableSoundInstance` sounds (Elytra, Minecarts, Beacons) are fully protected from mid-playback cutoff.
 - **Real-Time Telemetry:** Live chat feedback showing total sounds processed, filtered count, and estimated OpenAL channel savings (`/soundcull stats`).

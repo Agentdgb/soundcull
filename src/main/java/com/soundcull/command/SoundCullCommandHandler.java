@@ -1,6 +1,5 @@
 package com.soundcull.command;
 
-import com.soundcull.SoundCullClient;
 import com.soundcull.config.SoundCullConfig;
 import com.soundcull.culling.SoundThrottler;
 import com.soundcull.gui.SoundCullConfigScreen;
@@ -26,13 +25,12 @@ public final class SoundCullCommandHandler {
             return false;
         }
 
-        SoundCullClient.trace("Command intercepted: " + rawText);
         MinecraftClient client = MinecraftClient.getInstance();
 
         String[] parts = lower.split("\\s+");
         if (parts.length == 1) {
             sendFeedback(client, Text.empty()
-                    .append(Text.literal("[SoundCull v1.0.0] ").formatted(Formatting.GREEN, Formatting.BOLD))
+                    .append(Text.literal("[SoundCull v1.0.1] ").formatted(Formatting.GREEN, Formatting.BOLD))
                     .append(Text.literal("Estado: ").formatted(Formatting.GRAY))
                     .append(Text.literal(SoundCullConfig.enabled ? "ACTIVO" : "DESACTIVADO")
                             .formatted(SoundCullConfig.enabled ? Formatting.GREEN : Formatting.RED))
